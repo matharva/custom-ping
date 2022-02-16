@@ -2,7 +2,7 @@
 # from matplotlib import pyplot as plt
 import csv
 from pythonping import ping
-# from vendor_dependencies.rich.console import Console
+from rich.console import Console
 from tcp_latency import measure_latency
 # from vendor_dependencies.numpy import arange  
 
@@ -48,26 +48,26 @@ def cli():
     
     protocol = input("Select a protocol(TCP(t) / ICMP(i)): ")
 
-    # console = Console()
-    # with console.status(f"[bold green]Pinging {host} ...") as status:
+    console = Console()
+    with console.status(f"[bold green]Pinging {host} ...") as status:
 
-    if(protocol == "i"):
-        for count, time in zip(count_data, time_data):
-            with open("output.txt", "w") as f:
-                ping(host, verbose=True,
-                    interval=time / count, count=count, out=f)
+        if(protocol == "i"):
+            for count, time in zip(count_data, time_data):
+                with open("output.txt", "w") as f:
+                    ping(host, verbose=True,
+                        interval=time / count, count=count, out=f)
 
-            with open("output.txt", "r") as f:
-                data = f.read()
+                with open("output.txt", "r") as f:
+                    data = f.read()
 
-                for x in data.split():
-                    if "ms" in x:
-                        latency_data.append(float(x.replace("ms", "")))
-                    if x == "Request":
-                        latency_data.append(0)
-    else: 
-        for count, time in zip(count_data, time_data):
-            latency_data.extend([round(x, 2) for x in measure_latency(host, runs=count, wait=time / count, human_output=False)])
+                    for x in data.split():
+                        if "ms" in x:
+                            latency_data.append(float(x.replace("ms", "")))
+                        if x == "Request":
+                            latency_data.append(0)
+        else: 
+            for count, time in zip(count_data, time_data):
+                latency_data.extend([round(x, 2) for x in measure_latency(host, runs=count, wait=time / count, human_output=False)])
 
     print(f"Minimum Latency: {min(latency_data)}ms")
     print(f"Maximum Latency: {max(latency_data)}ms")
@@ -81,7 +81,7 @@ def cli():
     value = 0
     while value < sum(time_data):
         time_values.append(value)
-        value += round(sum(time_data) / sum(count_data), 1)
+        value += round(sum(time_data) / sum(count_data), 2)
     print("Latency Data: ", latency_data)
     print("Time Data: ", time_values)
 
