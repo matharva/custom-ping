@@ -1,4 +1,0 @@
-Reply from 216.58.203.14, 29 bytes in 20.6ms
-Reply from 216.58.203.14, 29 bytes in 6.62ms
-Reply from 216.58.203.14, 29 bytes in 10.41ms
-Reply from 216.58.203.14, 29 bytes in 8.27ms
