@@ -1,7 +1,3 @@
 pythonping==1.1.1
-click==8.0.1
-numpy==1.21.2
-rich==11.2.0
-six==1.16.0
 tcp-latency==0.0.11
-vendorize==0.2.2
+
