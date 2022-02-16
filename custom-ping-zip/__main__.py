@@ -67,7 +67,6 @@ def cli(host: str, protocol: str, dynamic: bool):
                 if os.path.exists(FILE_NAME):
                     os.remove(FILE_NAME)                
             elif protocol == "TCP": 
-                port: int = input("Enter port number: ")
                 for count, time in zip(count_data, time_data):
                     latency_data.extend([round(x, 2) for x in measure_latency(host, runs=count, wait=time / count, human_output=False, port=port)])
             else: 
