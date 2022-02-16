@@ -1,4 +1,3 @@
-from xmlrpc.client import boolean
 import click  
 import os
 import csv
@@ -49,7 +48,7 @@ def cli(host: str, protocol: str, dynamic: bool):
     try: 
         console = Console()
         print()
-        
+
         with console.status(f"[bold green]Pinging {host} ...") as status:
             if(protocol == "ICMP"):
                 for count, time in zip(count_data, time_data):
