@@ -1,10 +1,11 @@
 # import click  
 # from matplotlib import pyplot as plt
 import csv
-from pythonping import ping
-import numpy as np
-from rich.console import Console
-from tcp_latency import measure_latency
+from os import times
+from vendor_dependencies.pythonping import ping
+from vendor_dependencies.rich.console import Console
+from vendor_dependencies.tcp_latency import measure_latency
+# from vendor_dependencies.numpy import arange  
 
 # https://stackoverflow.com/questions/21981796/cannot-ping-aws-ec2-instance
 
@@ -73,9 +74,15 @@ def cli():
     print(f"Maximum Latency: {max(latency_data)}ms")
     print(f"Average Latency: {round(sum(latency_data) / len(latency_data), 2)}ms")
 
-    time_values = [round(x, 1) for x in np.arange(
-        0, sum(time_data), sum(time_data) / sum(count_data))]
-        
+    # time_values = [round(x, 1) for x in arange(
+
+    #     0, sum(time_data), sum(time_data) / sum(count_data))]
+    # time_values = [x + sum(time_data) / sum(count_data) for x in range(sum(time_data))]
+    time_values = []
+    value = 0
+    while value < sum(time_data):
+        time_values.append(value)
+        value += round(sum(time_data) / sum(count_data), 1)
     print("Latency Data: ", latency_data)
     print("Time Data: ", time_values)
 
