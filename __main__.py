@@ -1,12 +1,10 @@
-# import click  
-# from matplotlib import pyplot as plt
+import click
+import os
 import csv
 from pythonping import ping
-# from vendor_dependencies.rich.console import Console
+from rich.console import Console
 from tcp_latency import measure_latency
-# from vendor_dependencies.numpy import arange  
-
-# https://stackoverflow.com/questions/21981796/cannot-ping-aws-ec2-instance
+# from matplotlib import pyplot as plt
 
 
 # def plot_latency_graph(latency_data, time_values):
@@ -23,74 +21,88 @@ from tcp_latency import measure_latency
 #     plt.show()
 
 
-# @click.command()
-# @click.option('-c', '--count', default=4, help='Number of packets to be sent')
-# @click.option('-S', '--segment', help='Number of segments', default=1)
-# # @click.option('-s', '--size', help='Packet size for each packet sent', default=32)
-# @click.option('-t', '--time', help='Send packets for what period of time (in secs)', default=4)
-# # @click.option('-l', '--preload', help='Send number of packets without waiting for a response', default=3)
-# @click.argument('host')
-# def cli(host: str, count: int, time: int, segment: int):
-def cli():
+@click.command()
+@click.option('-D', '--dynamic', help='Send multiple segments of packets', is_flag=True)
+@click.option('-P', '--protocol', default="ICMP", help="Default: ICMP", type=click.Choice(['ICMP', 'TCP'], case_sensitive=False))
+@click.argument('host')
+def cli(host, protocol, dynamic):
+    FILE_NAME = "output.txt"
     latency_data = []
     count_data = []
     time_data = []
-    host = input("Enter the host: ").strip()
-    segment = int(input("Enter the number of segments: "))
 
-    for i in range(segment):
-        if(segment > 1):
-            print(f"For segment {i+1}: ")
+    if protocol == "TCP":
+        port = input("Enter port number: ")
+
+    if dynamic:
+        segment = int(input("\nEnter the number of segments: "))
+
+        for i in range(segment):
+            if(segment > 1):
+                print("\nFor segment " + str(i+1) + ": ")
+            count_data.append(
+                int(input("Enter the number of packets to be sent: ")))
+            time_data.append(
+                int(input("Enter the time (in secs) for which packets are to be sent: ")))
+    else:
         count_data.append(
-            int(input("Enter the number of packets to be sent: ")))
-        time_data.append(int(
-            input("Enter the time (in secs) for which packets are to be sent: ")))
-    
-    protocol = input("Select a protocol(TCP(t) / ICMP(i)): ")
+            int(input("\nEnter the number of packets to be sent: ")))
+        time_data.append(
+            int(input("Enter the time (in secs) for which packets are to be sent: ")))
 
-    # console = Console()
-    # with console.status(f"[bold green]Pinging {host} ...") as status:
+    try:
+        console = Console()
+        print()
 
-    if(protocol == "i"):
-        for count, time in zip(count_data, time_data):
-            with open("output.txt", "w") as f:
-                ping(host, verbose=True,
-                    interval=time / count, count=count, out=f)
+        with console.status("[bold green]Pinging " + str(host) + "...") as status:
+            if(protocol == "ICMP"):
+                for count, time in zip(count_data, time_data):
+                    with open(FILE_NAME, "w") as f:
+                        ping(host, verbose=True,
+                             interval=time / count, count=count, out=f)
 
-            with open("output.txt", "r") as f:
-                data = f.read()
+                    with open(FILE_NAME, "r") as f:
+                        data = f.read()
 
-                for x in data.split():
-                    if "ms" in x:
-                        latency_data.append(float(x.replace("ms", "")))
-                    if x == "Request":
-                        latency_data.append(0)
-    else: 
-        for count, time in zip(count_data, time_data):
-            latency_data.extend([round(x, 2) for x in measure_latency(host, runs=count, wait=time / count, human_output=False)])
+                        for x in data.split():
+                            if "ms" in x:
+                                latency_data.append(float(x.replace("ms", "")))
+                            if x == "Request":
+                                latency_data.append(0)
+                if os.path.exists(FILE_NAME):
+                    os.remove(FILE_NAME)
+            elif protocol == "TCP":
+                for count, time in zip(count_data, time_data):
+                    latency_data.extend([round(x, 2) for x in measure_latency(
+                        host, runs=count, wait=time / count, human_output=False, port=port)])
+            else:
+                raise Exception("[ERROR]: Invalid Protocol")
 
-    print(f"Minimum Latency: {min(latency_data)}ms")
-    print(f"Maximum Latency: {max(latency_data)}ms")
-    print(f"Average Latency: {round(sum(latency_data) / len(latency_data), 2)}ms")
+        if len(latency_data) == 0:
+            raise Exception(
+                "[ERROR]: The host does not exist or Request timed out")
 
-    # time_values = [round(x, 1) for x in arange(
+        print("\nMinimum Latency: " + str(min(latency_data)) + "ms")
+        print("Maximum Latency: " + str(max(latency_data)) + "ms")
+        print("Average Latency: " +
+              str(round(sum(latency_data) / len(latency_data), 2)) + "ms\n")
 
-    #     0, sum(time_data), sum(time_data) / sum(count_data))]
-    # time_values = [x + sum(time_data) / sum(count_data) for x in range(sum(time_data))]
-    time_values = []
-    value = 0
-    while value < sum(time_data):
-        time_values.append(value)
-        value += round(sum(time_data) / sum(count_data), 1)
-    print("Latency Data: ", latency_data)
-    print("Time Data: ", time_values)
+        time_values = []
+        value = 0
+        while value < sum(time_data):
+            time_values.append(value)
+            value += round(sum(time_data) / sum(count_data), 2)
+        print("Latency Data: ", latency_data)
+        print("Time Data: ", time_values)
 
-    with open('network_latency.csv', 'w', encoding='UTF8', newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(latency_data)
-        writer.writerow(time_values)
+        with open('network_latency.csv', 'w', encoding='UTF8', newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(latency_data)
+            writer.writerow(time_values)
 
-    # plot_latency_graph(latency_data, time_values)
+        # plot_latency_graph(latency_data, time_values)
+    except Exception as err:
+        print(err)
 
 
 if __name__ == '__main__':
