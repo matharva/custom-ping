@@ -1,4 +1,3 @@
-import os
 import csv
 from pythonping import ping
 from tcp_latency import measure_latency
@@ -54,20 +53,15 @@ def cli(host, protocol, dynamic, output):
         print("Pinging " + str(host) + "...")
         if(protocol == "ICMP"):
             for count, time in zip(count_data, time_data):
-                with open(FILE_NAME, "w") as f:
-                    ping(host, verbose=True,
-                         interval=time / count, count=count, out=f)
+                ping_data = ping(host, verbose=False,
+                                 interval=time / count, count=count, out_format=None)
 
-                with open(FILE_NAME, "r") as f:
-                    data = f.read()
+                for x in str(ping_data).split():
+                    if "ms=" in x:
+                        latency_data.append(float(x.replace("ms=", "")))
+                    if x == "Timed":
+                        latency_data.append(0)
 
-                    for x in data.split():
-                        if "ms" in x:
-                            latency_data.append(float(x.replace("ms", "")))
-                        if x == "Request":
-                            latency_data.append(0)
-            if os.path.exists(FILE_NAME):
-                os.remove(FILE_NAME)
         elif protocol == "TCP":
             for count, time in zip(count_data, time_data):
                 latency_data.extend([round(x, 2) for x in measure_latency(
